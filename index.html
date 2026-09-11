@@ -202,6 +202,39 @@
     text-transform: uppercase; letter-spacing: 0.06em;
   }
   .team-panel .mkpis { grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 8px; }
+  .rival-banner {
+    display: flex; align-items: center; flex-wrap: wrap; gap: 3px 10px;
+    border-radius: 10px; padding: 9px 12px; margin: 12px 0 2px;
+    border: 1px solid rgba(45,212,191,0.35);
+    background: linear-gradient(90deg, rgba(45,212,191,0.10), rgba(45,212,191,0.02) 70%);
+  }
+  .rival-banner.side-b {
+    border-color: rgba(251,191,36,0.35);
+    background: linear-gradient(90deg, rgba(251,191,36,0.09), rgba(251,191,36,0.02) 70%);
+  }
+  .rival-banner .rb-label {
+    width: 100%; color: var(--muted); font-size: 10px; font-weight: 650;
+    text-transform: uppercase; letter-spacing: 0.07em;
+  }
+  .rival-banner .rb-name { font-size: 14.5px; font-weight: 700; color: var(--accent); }
+  .rival-banner.side-b .rb-name { color: var(--amber); }
+  .rival-banner .rb-stats { color: var(--text); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .rival-banner .rb-note { width: 100%; color: var(--sub); font-size: 11px; }
+  .rival-banner .rb-btn {
+    margin-left: auto; background: transparent; color: var(--accent);
+    border: 1px solid rgba(45,212,191,0.4); border-radius: 8px;
+    padding: 5px 10px; font-size: 11px; font-weight: 600; cursor: pointer;
+    font-family: inherit; white-space: nowrap; transition: background .15s ease;
+  }
+  .rival-banner .rb-btn:hover { background: rgba(45,212,191,0.12); }
+  .rival-banner.side-b .rb-btn { color: var(--amber); border-color: rgba(251,191,36,0.4); }
+  .rival-banner.side-b .rb-btn:hover { background: rgba(251,191,36,0.12); }
+  tr.rival-row.a td { background: rgba(45,212,191,0.07); }
+  tr.rival-row.b td { background: rgba(251,191,36,0.06); }
+  tr.rival-row.a td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+  tr.rival-row.b td:first-child { box-shadow: inset 3px 0 0 var(--amber); }
+  .rival-star { color: var(--accent); margin-left: 5px; font-size: 10.5px; }
+  tr.rival-row.b .rival-star { color: var(--amber); }
   .tbl-title {
     font-size: 12px; font-weight: 650; color: var(--sub);
     margin: 12px 0 8px; text-transform: uppercase; letter-spacing: 0.05em;
@@ -297,7 +330,7 @@
 
   <section class="focus-head" id="focusSection">
     <h2><span class="bar"></span>Team focus <span class="accent">& head-to-head</span></h2>
-    <p class="sub">Pick any two teams from the selected league to inspect their meetings and each team's own both-halves BTTS record. This section is fully independent — the league analysis above never changes based on your team picks.</p>
+    <p class="sub">Pick any two teams from the selected league to inspect their meetings and each team's own both-halves BTTS record. Each panel highlights the opponent that team has had the most BTTS-both-halves matches with. This section is fully independent — the league analysis above never changes based on your team picks.</p>
   </section>
 
   <div class="card focus-card">
@@ -347,7 +380,7 @@
     <p><strong>Definition:</strong> a match qualifies when both teams scored in the 1st half AND both teams scored in the 2nd half (90-minute score; extra time and penalties ignored).</p>
     <p><strong>Exclusions:</strong> matches without a recorded half-time score (≈6,400 across the dataset) cannot be classified and are excluded from rates. Percentages are qualifying matches ÷ matches with HT/FT recorded.</p>
     <p><strong>Source:</strong> openfootball/football.json (GitHub) · CSVs generated 2026-09-08 · Dashboard works fully offline — all data embedded.</p>
-    <p><strong>Team focus:</strong> H2H and per-team stats use the packed full match history of the selected league (all seasons). Matches without half-time scores are shown as “n/a” and never count as qualifying.</p>
+    <p><strong>Team focus:</strong> H2H and per-team stats use the packed full match history of the selected league (all seasons). Matches without half-time scores are shown as “n/a” and never count as qualifying. Each panel flags the team's top both-halves rival — the opponent they have recorded the most qualifying matches against — and highlights those rows.</p>
   </footer>
 
 </div>
@@ -821,7 +854,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     var st = {
       played: 0, evaluable: 0, qual: 0, btts: 0,
       home: [0, 0, 0], away: [0, 0, 0],  // [played, evaluable, qualified]
-      gf: 0, ga: 0, qualRows: [],
+      gf: 0, ga: 0, qualRows: [], byOpp: {},
     };
     D.forEach(function (m) {
       var isHome = m.h === teamIdx, isAway = m.a === teamIdx;
@@ -833,17 +866,45 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
       var hasHt = m.h0 >= 0;
       var q = hasHt && isQual(m.h0, m.h1, m.f0, m.f1);
       if (hasHt) st.evaluable++;
+      var opp = isHome ? m.a : m.h;
+      var o = st.byOpp[opp] || (st.byOpp[opp] = { meets: 0, qual: 0, lastQ: '' });
+      o.meets++;
       var bucket = isHome ? st.home : st.away;
       bucket[0]++;
       if (hasHt) bucket[1]++;
       if (q) {
         bucket[2]++;
         st.qual++;
-        st.qualRows.push({ m: m, home: isHome, opp: isHome ? m.a : m.h });
+        st.qualRows.push({ m: m, home: isHome, opp: opp });
+        o.qual++;
+        if (String(m.d || '') > String(o.lastQ)) o.lastQ = String(m.d || '');
       }
     });
     st.qualRows.sort(byDateDesc);
     return st;
+  }
+
+  // Opponent the team has had the most BTTS-both-halves (qualifying) matches with.
+  // Tie-breaks: more total meetings → most recent qualifying match → team order.
+  function topRival(st) {
+    var best = null;
+    Object.keys(st.byOpp).forEach(function (k) {
+      var o = st.byOpp[k], idx = +k;
+      if (!o.qual) return;
+      if (!best) {
+        best = { idx: idx, qual: o.qual, meets: o.meets, lastQ: o.lastQ };
+        return;
+      }
+      if (o.qual > best.qual ||
+          (o.qual === best.qual && o.meets > best.meets) ||
+          (o.qual === best.qual && o.meets === best.meets &&
+           String(o.lastQ) > String(best.lastQ)) ||
+          (o.qual === best.qual && o.meets === best.meets &&
+           String(o.lastQ) === String(best.lastQ) && idx < best.idx)) {
+        best = { idx: idx, qual: o.qual, meets: o.meets, lastQ: o.lastQ };
+      }
+    });
+    return best;
   }
 
   function mkChip(parent, label, value, note, accent) {
@@ -886,12 +947,14 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     }
     rows.forEach(function (r) {
       var tr = document.createElement('tr');
+      if (cols.rowCls) tr.className = cols.rowCls(r) || '';
       cols.cells(r).forEach(function (cell) {
         var td = el('td', cell.cls || '');
         if (cell.badge) {
           td.appendChild(el('span', 'badge ' + cell.badge[1], cell.badge[0]));
         } else {
           td.textContent = cell.v === '' || cell.v === undefined ? '—' : cell.v;
+          if (cell.star) td.appendChild(el('span', 'rival-star', '★'));
         }
         tr.appendChild(td);
       });
@@ -925,6 +988,35 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
            st.away[0] + ' played · of ' + st.away[1] + ' with HT', false);
     root.appendChild(chips);
 
+    // ── highlight: opponent with the most BTTS-both-halves matches together ──
+    var rival = topRival(st);
+    if (rival) {
+      var rName = L.all.teams[rival.idx];
+      var banner = el('div', 'rival-banner side-' + side);
+      banner.appendChild(el('div', 'rb-label',
+        '★ Most BTTS both-halves rival'));
+      banner.appendChild(el('span', 'rb-name', rName));
+      banner.appendChild(el('span', 'rb-stats',
+        rival.qual + ' qualifying match' + (rival.qual === 1 ? '' : 'es') + ' together'));
+      var other = side === 'a' ? focusState.b : focusState.a;
+      if (other !== rName) {
+        var btn = el('button', 'rb-btn', 'Load H2H ⇄');
+        btn.title = 'Put ' + rName + ' in the other slot and show their head-to-head';
+        btn.addEventListener('click', function () {
+          var sel = side === 'a' ? $('teamB') : $('teamA');
+          sel.value = rName;
+          sel.dispatchEvent(new Event('change'));
+        });
+        banner.appendChild(btn);
+      }
+      banner.appendChild(el('div', 'rb-note',
+        'out of ' + rival.meets + ' meeting' + (rival.meets === 1 ? '' : 's') +
+        ' in this league · ' + fmt1(100 * rival.qual / st.qual) + '% of ' + name +
+        '’s ' + st.qual + ' qualifying match' + (st.qual === 1 ? '' : 'es') +
+        ' — highlighted below'));
+      root.appendChild(banner);
+    }
+
     var title = el('div', 'tbl-title',
       'Their qualifying matches — ' + st.qual + (st.qual === 1 ? ' match' : ' matches'));
     root.appendChild(title);
@@ -936,14 +1028,18 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     var tbody = el('tbody');
     renderMatchRows(tbody, st.qualRows.map(function (r) { return r.m; }), {
       empty: 'This team has no qualifying matches in this league.',
+      rowCls: rival ? function (m) {
+        return (m.h === teamIdx ? m.a : m.h) === rival.idx ? 'rival-row ' + side : '';
+      } : null,
       cells: function (m) {
         var home = L.all.teams[m.h], away = L.all.teams[m.a];
         var pat = patternOf(m);
+        var isRival = !!rival && (m.h === teamIdx ? m.a : m.h) === rival.idx;
         return [
           { v: L.all.seasons[m.s] },
           { v: m.d, cls: 'num' },
           { v: m.h === teamIdx ? 'Home' : 'Away' },
-          { v: m.h === teamIdx ? away : home },
+          { v: m.h === teamIdx ? away : home, star: isRival },
           { v: m.h0 < 0 ? '' : m.h0 + '-' + m.h1, cls: 'score' },
           { v: m.f0 + '-' + m.f1, cls: 'score' },
           { badge: pat },
@@ -1055,13 +1151,23 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
       else draws++;
     });
 
+    var sa = teamStats(D, ai), sb = teamStats(D, bi);
+
+    // cross-link: when a selected team's top both-halves rival is the OTHER
+    // selected team, call it out on the H2H chip
+    var ra = topRival(sa), rb = topRival(sb);
+    var cross = [];
+    if (ra && ra.idx === bi) cross.push('top rival of ' + a);
+    if (rb && rb.idx === ai) cross.push('top rival of ' + b);
+
     var kpis = $('h2hKpis');
     kpis.innerHTML = '';
     mkChip(kpis, 'Meetings', String(meetings.length), 'all seasons in this league', false);
     mkChip(kpis, 'With HT data', String(evaluable),
            evaluable ? 'rest shown as n/a' : 'none — rates unavailable', false);
     mkChip(kpis, 'Both halves ✔', String(qual),
-           evaluable ? fmt1(100 * qual / evaluable) + '% of meetings with HT' : 'no HT data', true);
+           evaluable ? fmt1(100 * qual / evaluable) + '% of meetings with HT' +
+             (cross.length ? ' · ' + cross.join(' and ') : '') : 'no HT data', true);
     mkChip(kpis, 'Classic BTTS', String(btts),
            meetings.length ? fmt1(100 * btts / meetings.length) + '% of meetings' : '—', false);
     mkChip(kpis, 'Avg goals', meetings.length ? fmt1(goals / meetings.length) : '—',
@@ -1087,7 +1193,6 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
       },
     });
 
-    var sa = teamStats(D, ai), sb = teamStats(D, bi);
     renderTeamPanel($('panelA'), L, D, ai, 'a');
     renderTeamPanel($('panelB'), L, D, bi, 'b');
 
