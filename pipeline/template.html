@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BTTS Both Halves — League Analytics</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #0F172A;
+    --surface: #1E293B;
+    --surface-2: #24324A;
+    --line: rgba(148,163,184,0.10);
+    --text: #F1F5F9;
+    --sub: #94A3B8;
+    --muted: #64748B;
+    --accent: #2DD4BF;
+    --accent-dim: rgba(45,212,191,0.12);
+    --amber: #FBBF24;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.625;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 24px 24px 48px; }
+
+  /* ── Header ─────────────────────────────────────── */
+  header {
+    display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-end;
+    justify-content: space-between; margin-bottom: 22px;
+  }
+  h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
+  h1 .accent { color: var(--accent); font-weight: 600; }
+  .sub { color: var(--sub); font-size: 13px; margin-top: 2px; }
+  .switcher { display: flex; align-items: center; gap: 10px; }
+  .switcher label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+  select, input[type="search"] {
+    background: var(--surface); color: var(--text);
+    border: 1px solid var(--line); border-radius: 8px;
+    padding: 9px 12px; font-size: 13px; font-family: inherit;
+    outline: none; transition: border-color .15s ease;
+  }
+  select:focus, input[type="search"]:focus { border-color: var(--accent); }
+  #league { min-width: 340px; }
+
+  /* ── League bar ─────────────────────────────────── */
+  .league-bar {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+    padding: 14px 18px; margin-bottom: 18px;
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px;
+  }
+  .league-bar .name { font-size: 17px; font-weight: 650; }
+  .league-bar .chip {
+    color: var(--sub); font-size: 12.5px; padding: 2px 10px;
+    background: var(--accent-dim); border-radius: 999px; color: var(--accent);
+  }
+  .league-bar .meta { color: var(--sub); font-size: 13px; }
+
+  /* ── KPI cards ──────────────────────────────────── */
+  .kpis {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px; margin-bottom: 18px;
+  }
+  .kpi {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+    padding: 14px 16px;
+  }
+  .kpi .label { color: var(--muted); font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.07em; }
+  .kpi .value {
+    font-size: 26px; font-weight: 700; margin-top: 4px;
+    font-variant-numeric: tabular-nums; letter-spacing: -0.01em;
+  }
+  .kpi .value.accent { color: var(--accent); }
+  .kpi .note { color: var(--sub); font-size: 12px; margin-top: 2px; }
+
+  /* ── Cards & charts ────────────────────────────── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+    padding: 16px 18px; margin-bottom: 14px;
+  }
+  .grid-2 .card { margin-bottom: 0; }
+  .card-head { margin-bottom: 8px; }
+  .card-head h2 { font-size: 14.5px; font-weight: 650; }
+  .card-head .desc { color: var(--sub); font-size: 12.5px; }
+  .chart { width: 100%; height: 320px; }
+  .chart.tall { height: 430px; }
+
+  /* ── Match explorer ────────────────────────────── */
+  .explorer-controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 12px; }
+  .explorer-controls input[type="search"] { min-width: 240px; }
+  .count { color: var(--muted); font-size: 12.5px; margin-left: auto; font-variant-numeric: tabular-nums; }
+  .table-scroll { overflow: auto; max-height: 480px; border-radius: 8px; border: 1px solid var(--line); }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  thead th {
+    position: sticky; top: 0; background: var(--surface-2); z-index: 2;
+    text-align: left; padding: 9px 12px; color: var(--sub);
+    font-weight: 600; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.05em;
+    cursor: pointer; user-select: none; white-space: nowrap;
+  }
+  thead th:hover { color: var(--text); }
+  thead th .arr { font-size: 9px; margin-left: 4px; color: var(--accent); }
+  tbody td { padding: 8px 12px; border-top: 1px solid var(--line); white-space: nowrap; }
+  tbody tr:hover td { background: rgba(148,163,184,0.05); }
+  td.num { font-variant-numeric: tabular-nums; }
+  td.score { font-weight: 600; color: var(--accent); font-variant-numeric: tabular-nums; }
+  td.teams { white-space: normal; min-width: 220px; }
+  .pager { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
+  .pager button {
+    background: var(--surface-2); color: var(--text); border: 1px solid var(--line);
+    border-radius: 8px; padding: 7px 14px; font-size: 12.5px; cursor: pointer; font-family: inherit;
+    transition: background .15s ease;
+  }
+  .pager button:hover:not(:disabled) { background: #2C3D58; }
+  .pager button:disabled { opacity: 0.35; cursor: default; }
+  .pager .info { color: var(--sub); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+
+  footer { margin-top: 26px; color: var(--muted); font-size: 12px; }
+  footer p { margin-bottom: 4px; }
+
+  /* ── Team focus & H2H ───────────────────────── */
+  .focus-head { margin: 30px 0 12px; }
+  .focus-head h2 {
+    font-size: 17px; font-weight: 700;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .focus-head h2 .bar {
+    width: 4px; height: 18px; background: var(--accent);
+    border-radius: 2px; display: inline-block;
+  }
+  .focus-head .sub { margin-top: 3px; max-width: 780px; }
+  .focus-card {
+    border-color: rgba(45,212,191,0.22);
+    background: linear-gradient(180deg, rgba(45,212,191,0.045), rgba(45,212,191,0) 55%), var(--surface);
+  }
+  .focus-controls {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 14px;
+  }
+  .focus-controls label {
+    color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  #teamA, #teamB { min-width: 240px; }
+  .swap-btn {
+    background: var(--surface-2); color: var(--text); border: 1px solid var(--line);
+    border-radius: 8px; padding: 9px 12px; font-size: 12.5px; cursor: pointer;
+    font-family: inherit; transition: background .15s ease;
+  }
+  .swap-btn:hover { background: #2C3D58; }
+  .focus-empty {
+    color: var(--sub); font-size: 13px; background: var(--surface-2);
+    border: 1px dashed rgba(148,163,184,0.25); border-radius: 10px;
+    padding: 26px 22px; text-align: center;
+  }
+  .hidden { display: none !important; }
+  .focus-block-title {
+    font-size: 12px; font-weight: 650; color: var(--text);
+    margin: 6px 0 10px; text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .mkpis {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px; margin-bottom: 14px;
+  }
+  .mkpi {
+    background: var(--surface-2); border: 1px solid var(--line);
+    border-radius: 10px; padding: 10px 12px;
+  }
+  .mkpi .label { color: var(--muted); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .mkpi .value {
+    font-size: 18px; font-weight: 700; margin-top: 2px;
+    font-variant-numeric: tabular-nums; letter-spacing: -0.01em;
+  }
+  .mkpi .value.accent { color: var(--accent); }
+  .mkpi .note { color: var(--sub); font-size: 11px; margin-top: 1px; }
+  .table-scroll.small { max-height: 300px; }
+  .badge {
+    display: inline-block; padding: 2px 9px; border-radius: 999px;
+    font-size: 11px; font-weight: 600; white-space: nowrap;
+  }
+  .b-full { background: rgba(45,212,191,0.14); color: var(--accent); }
+  .b-btts { background: rgba(251,191,36,0.12); color: var(--amber); }
+  .b-no { background: rgba(148,163,184,0.10); color: var(--muted); }
+  .b-na {
+    background: transparent; color: var(--muted); font-style: italic; font-weight: 500;
+    border: 1px dashed rgba(148,163,184,0.3);
+  }
+  .focus-grid { margin-top: 16px; }
+  .team-panel {
+    background: var(--surface-2); border: 1px solid var(--line);
+    border-radius: 12px; padding: 14px 16px;
+  }
+  .tp-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .tp-head .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .tp-head .dot.a { background: var(--accent); }
+  .tp-head .dot.b { background: var(--amber); }
+  .tp-head .tp-name { font-size: 15px; font-weight: 650; }
+  .tp-head .tp-side {
+    margin-left: auto; color: var(--muted); font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .team-panel .mkpis { grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 8px; }
+  .rival-banner {
+    display: flex; align-items: center; flex-wrap: wrap; gap: 3px 10px;
+    border-radius: 10px; padding: 9px 12px; margin: 12px 0 2px;
+    border: 1px solid rgba(45,212,191,0.35);
+    background: linear-gradient(90deg, rgba(45,212,191,0.10), rgba(45,212,191,0.02) 70%);
+  }
+  .rival-banner.side-b {
+    border-color: rgba(251,191,36,0.35);
+    background: linear-gradient(90deg, rgba(251,191,36,0.09), rgba(251,191,36,0.02) 70%);
+  }
+  .rival-banner .rb-label {
+    width: 100%; color: var(--muted); font-size: 10px; font-weight: 650;
+    text-transform: uppercase; letter-spacing: 0.07em;
+  }
+  .rival-banner .rb-name { font-size: 14.5px; font-weight: 700; color: var(--accent); }
+  .rival-banner.side-b .rb-name { color: var(--amber); }
+  .rival-banner .rb-stats { color: var(--text); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .rival-banner .rb-note { width: 100%; color: var(--sub); font-size: 11px; }
+  .rival-banner .rb-btn {
+    margin-left: auto; background: transparent; color: var(--accent);
+    border: 1px solid rgba(45,212,191,0.4); border-radius: 8px;
+    padding: 5px 10px; font-size: 11px; font-weight: 600; cursor: pointer;
+    font-family: inherit; white-space: nowrap; transition: background .15s ease;
+  }
+  .rival-banner .rb-btn:hover { background: rgba(45,212,191,0.12); }
+  .rival-banner.side-b .rb-btn { color: var(--amber); border-color: rgba(251,191,36,0.4); }
+  .rival-banner.side-b .rb-btn:hover { background: rgba(251,191,36,0.12); }
+  tr.rival-row.a td { background: rgba(45,212,191,0.07); }
+  tr.rival-row.b td { background: rgba(251,191,36,0.06); }
+  tr.rival-row.a td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+  tr.rival-row.b td:first-child { box-shadow: inset 3px 0 0 var(--amber); }
+  .rival-star { color: var(--accent); margin-left: 5px; font-size: 10.5px; }
+  tr.rival-row.b .rival-star { color: var(--amber); }
+  .nextfx {
+    display: flex; align-items: center; flex-wrap: wrap; gap: 3px 10px;
+    border-radius: 10px; padding: 8px 12px; margin: 8px 0 2px;
+    background: var(--surface); border: 1px dashed var(--line);
+  }
+  .nextfx .nf-label {
+    color: var(--muted); font-size: 10px; font-weight: 650;
+    text-transform: uppercase; letter-spacing: 0.07em;
+  }
+  .nextfx .nf-text { color: var(--text); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+  .nextfx .nf-btn {
+    margin-left: auto; background: var(--surface-2); color: var(--accent);
+    border: 1px solid rgba(45,212,191,0.4); border-radius: 8px;
+    padding: 4px 9px; font-size: 11px; font-weight: 600; cursor: pointer;
+    font-family: inherit; font-variant-numeric: tabular-nums; white-space: nowrap;
+    transition: background .15s ease;
+  }
+  .nextfx .nf-btn:hover { background: rgba(45,212,191,0.12); }
+  .nextfx .nf-btn:disabled { opacity: 0.45; cursor: default; }
+  .outlook {
+    display: grid; grid-template-columns: minmax(260px, 5fr) minmax(280px, 6fr);
+    gap: 16px; background: var(--surface-2); border: 1px solid var(--line);
+    border-radius: 12px; padding: 14px 16px; margin-bottom: 12px;
+  }
+  .ol-fixture { color: var(--sub); font-size: 12px; margin-bottom: 10px; }
+  .ol-numrow { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .ol-num {
+    font-size: 40px; font-weight: 750; color: var(--accent);
+    letter-spacing: -0.02em; font-variant-numeric: tabular-nums;
+  }
+  .ol-num .ol-pct { font-size: 18px; font-weight: 600; margin-left: 2px; }
+  .ol-band {
+    font-size: 10.5px; font-weight: 650; padding: 3px 10px; border-radius: 999px;
+    text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap;
+  }
+  .ol-band.b-low   { background: rgba(148,163,184,0.10); color: var(--muted); }
+  .ol-band.b-below { background: rgba(148,163,184,0.16); color: var(--sub); }
+  .ol-band.b-mid   { background: rgba(45,212,191,0.10); color: var(--accent); }
+  .ol-band.b-above { background: rgba(45,212,191,0.18); color: var(--accent); }
+  .ol-band.b-high  { background: rgba(251,191,36,0.14); color: var(--amber); }
+  .obar {
+    position: relative; height: 12px; border-radius: 999px;
+    background: #0F172A; border: 1px solid var(--line); overflow: hidden;
+    margin: 10px 0 4px;
+  }
+  .obar-fill {
+    position: absolute; top: 0; bottom: 0; left: 0; border-radius: 999px;
+    background: linear-gradient(90deg, rgba(45,212,191,0.5), var(--accent));
+  }
+  .obar.ob-half .obar-fill {
+    background: linear-gradient(90deg, rgba(45,212,191,0.3), rgba(45,212,191,0.75));
+  }
+  .obar-tick {
+    position: absolute; top: -2px; bottom: -2px; width: 2px;
+    background: var(--amber);
+  }
+  .ol-scale { color: var(--muted); font-size: 10.5px; margin-bottom: 6px; }
+  .ol-half { margin: 6px 0 2px; }
+  .ol-half .oh-row {
+    display: flex; justify-content: space-between; font-size: 11.5px; color: var(--sub);
+  }
+  .ol-half .oh-row b { color: var(--text); font-variant-numeric: tabular-nums; }
+  .ol-side .mkpis { grid-template-columns: repeat(auto-fit, minmax(122px, 1fr)); gap: 8px; margin: 12px 0 0; }
+  .ol-note { color: var(--muted); font-size: 11px; margin: 2px 0 14px; }
+  .tbl-title {
+    font-size: 12px; font-weight: 650; color: var(--sub);
+    margin: 12px 0 8px; text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .card.inner { margin-bottom: 14px; background: var(--surface-2); }
+  .card.inner:last-child { margin-bottom: 0; }
+
+  @media (max-width: 900px) {
+    .grid-2 { grid-template-columns: 1fr; }
+    #league { min-width: 100%; }
+    .switcher { width: 100%; flex-direction: column; align-items: stretch; }
+    #teamA, #teamB { min-width: 100%; }
+    .focus-controls { width: 100%; flex-direction: column; align-items: stretch; }
+    .swap-btn { align-self: flex-start; }
+    .outlook { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <h1>BTTS Both Halves <span class="accent">· League Analytics</span></h1>
+      <p class="sub">Matches where both teams scored in each half · openfootball/football.json · seasons 2010-11 → 2026-27</p>
+    </div>
+    <div class="switcher">
+      <label for="league">League</label>
+      <select id="league"></select>
+    </div>
+  </header>
+
+  <div class="league-bar" id="leagueBar"></div>
+
+  <section class="kpis" id="kpis"></section>
+
+  <section class="grid-2">
+    <div class="card">
+      <div class="card-head">
+        <h2>Hit rate by season</h2>
+        <div class="desc" id="trendDesc"></div>
+      </div>
+      <div id="trend" class="chart"></div>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <h2>Most frequent teams</h2>
+        <div class="desc" id="teamsDesc"></div>
+      </div>
+      <div id="teams" class="chart"></div>
+    </div>
+  </section>
+
+  <div class="card">
+    <div class="card-head">
+      <h2>Half-time → Full-time scorelines</h2>
+      <div class="desc" id="matrixDesc"></div>
+    </div>
+    <div id="matrix" class="chart tall"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h2>Match explorer</h2>
+      <div class="desc">Every qualifying match in the selected league — search, filter by season, click a column header to sort.</div>
+    </div>
+    <div class="explorer-controls">
+      <input type="search" id="q" placeholder="Search team, round or date…">
+      <select id="seasonFilter"></select>
+      <span class="count" id="matchCount"></span>
+    </div>
+    <div class="table-scroll">
+      <table id="explorerTable">
+        <thead>
+          <tr>
+            <th data-key="0">Season</th>
+            <th data-key="1">Date</th>
+            <th data-key="3">Round</th>
+            <th data-key="4">Home</th>
+            <th data-key="5">Away</th>
+            <th data-key="6">HT</th>
+            <th data-key="7">FT</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div class="pager">
+      <button id="prev">← Prev</button>
+      <span class="info" id="pageInfo"></span>
+      <button id="next">Next →</button>
+    </div>
+  </div>
+
+  <section class="focus-head" id="focusSection">
+    <h2><span class="bar"></span>Team focus <span class="accent">& head-to-head</span></h2>
+    <p class="sub">Pick any two teams from the selected league to inspect their meetings and each team's own both-halves BTTS record. Each panel highlights the opponent that team has had the most BTTS-both-halves matches with, shows its next scheduled fixture with a statistical outlook, and the panel pair gets a next-meeting probability estimate. This section is fully independent — the league analysis above never changes based on your team picks.</p>
+  </section>
+
+  <div class="card focus-card">
+    <div class="focus-controls">
+      <label for="teamA">Team A</label>
+      <select id="teamA"></select>
+      <button id="swapTeams" class="swap-btn" title="Swap teams A and B">⇄ Swap</button>
+      <label for="teamB">Team B</label>
+      <select id="teamB"></select>
+      <span class="count" id="focusMsg"></span>
+    </div>
+
+    <div id="focusEmpty" class="focus-empty">
+      Select two teams above to reveal their head-to-head meetings, qualifying patterns and a side-by-side comparison.
+    </div>
+
+    <div id="focusContent" class="hidden">
+      <div class="focus-block-title">Head-to-head meetings</div>
+      <div class="mkpis" id="h2hKpis"></div>
+      <div class="table-scroll small">
+        <table>
+          <thead>
+            <tr>
+              <th>Season</th><th>Date</th><th>Home</th><th>Away</th><th>HT</th><th>FT</th><th>Pattern</th>
+            </tr>
+          </thead>
+          <tbody id="h2hRows"></tbody>
+        </table>
+      </div>
+
+      <div class="grid-2 focus-grid">
+        <div class="team-panel" id="panelA"></div>
+        <div class="team-panel" id="panelB"></div>
+      </div>
+
+      <div class="focus-block-title">Next-meeting outlook — estimated chance of BTTS both halves</div>
+      <div id="outlookBlock"></div>
+
+      <div class="card inner">
+        <div class="card-head">
+          <h2>Side-by-side comparison</h2>
+          <div class="desc" id="h2hChartDesc"></div>
+        </div>
+        <div id="h2hChart" class="chart"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p><strong>Definition:</strong> a match qualifies when both teams scored in the 1st half AND both teams scored in the 2nd half (90-minute score; extra time and penalties ignored).</p>
+    <p><strong>Exclusions:</strong> matches without a recorded half-time score (≈6,400 across the dataset) cannot be classified and are excluded from rates. Percentages are qualifying matches ÷ matches with HT/FT recorded.</p>
+    <p><strong>Source:</strong> openfootball/football.json (GitHub) · <span id="dataStamp">data updated —</span> · Dashboard works fully offline — all data embedded · auto-refreshed from the source daily via a scheduled rebuild (see repo README).</p>
+    <p><strong>Team focus:</strong> H2H and per-team stats use the packed full match history of the selected league (all seasons). Matches without half-time scores are shown as “n/a” and never count as qualifying. Each panel flags the team's top both-halves rival — the opponent they have recorded the most qualifying matches against — and highlights those rows.</p>
+    <p><strong>Next-meeting outlook:</strong> a statistical estimate of the chance that the next match is a BTTS-both-halves game, built from venue-adjusted team rates (75%), head-to-head history (25%) and the league base rate — with small samples pulled toward the league average. It reflects historical frequencies only and is not a guarantee of any future result.</p>
+  </footer>
+
+</div>
+<script>{{ECHARTS_JS}}</script>
+<script>window.DATA = {{DATA_JSON}};</script>
+<script>{{APP_JS}}</script>
+</body>
+</html>

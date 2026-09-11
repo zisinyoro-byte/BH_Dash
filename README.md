@@ -8,7 +8,7 @@ again in the second half** — a much stricter pattern than classic BTTS (both t
 
 ## Deploy it anywhere
 
-The app is a **single static file** (`index.html`, ~1.5 MB) with all data and the charting
+The app is a **single static file** (`index.html`, ~4 MB) with all data and the charting
 library (ECharts 5) embedded. No build step, no server, no database, no environment variables.
 
 **GitHub Pages** (recommended)
@@ -39,6 +39,42 @@ Live at: `https://zisinyoro-byte.github.io/BH_Dash/`
 | Match browser | Searchable, sortable table of every qualifying match |
 | Team focus & H2H | Pick any two teams from the league: their head-to-head meetings with qualifying-pattern badges, per-team BTTS records (home/away splits, goal averages) and a side-by-side comparison chart — fully independent of the league analysis above. Each team panel also flags the club's **top both-halves rival** (the opponent it has recorded the most qualifying matches against), highlights those matches in its qualifying list, and offers a one-click "Load H2H" to put that rival in the other slot |
 | Next-meeting outlook | For the selected pair: the next scheduled fixture (from embedded 2026-27 / 2026 season schedules) with a statistical estimate of the chance it ends BTTS in both halves — 75% venue-adjusted team rates + 25% head-to-head, shrunk toward the league average when samples are small. Includes per-half estimates and each team's own next-fixture outlook. Historical frequencies, not a guarantee |
+
+## Automatic data refresh
+
+The dashboard updates itself whenever the source data changes — no manual work needed.
+
+```
+openfootball/football.json ──(daily 04:00 UTC, GitHub Actions)──▶ csv/ + index.html ──▶ Pages redeploy
+```
+
+- **Scheduled rebuild**: [`refresh.yml`](.github/workflows/refresh.yml) clones the latest
+  `openfootball/football.json` and re-runs the pipeline every day at 04:00 UTC
+  (also triggerable anytime via **Run workflow** under the repo's *Actions* tab).
+- **Change-detected commits**: the pipeline output is deterministic for a given source
+  revision (the data stamp comes from the upstream HEAD commit, not the build clock).
+  If the source hasn't changed, the run produces byte-identical files and commits nothing;
+  if it has, the bot commits `chore(data): auto-refresh …` and pushes, and GitHub Pages
+  redeploys automatically.
+- **Freshness is visible in the app**: the footer shows *data updated \<date\> (source
+  commit \<sha\>)*, stamped from the exact upstream commit the data was built from.
+
+## The pipeline
+
+| Step | Script | What it does |
+|------|--------|--------------|
+| 1 | `pipeline/btts_csv.py` | Scans the openfootball clone → one qualifying-match CSV per league into `csv/` (the same CSVs shipped in the download package) |
+| 2 | `pipeline/prep_data.py` | Aggregates + packs full match history, upcoming fixtures and name-variant merging into `data.json` |
+| 3 | `pipeline/build.py` | Inlines ECharts + data + app into the single-file `index.html` |
+| — | `pipeline/refresh.py` | Orchestrates 1–3 end-to-end (`python pipeline/refresh.py --src <clone> --repo .`) |
+
+Pure Python 3 standard library — no dependencies to install. To refresh locally:
+
+```bash
+git clone https://github.com/openfootball/football.json /tmp/football.json
+python pipeline/refresh.py --src /tmp/football.json --repo .
+git add -A && git commit -m "chore(data): manual refresh" && git push
+```
 
 ## The rule
 
