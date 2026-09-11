@@ -55,6 +55,10 @@ Example: 1–0 HT → 2–1 FT does **not** qualify (away scored only before the
 - Seasons: 2010-11 → 2026-27 across 44 competitions (top European leagues, cups, UEFA CL, MLS, and more)
 - 82,616 evaluable matches → **4,583 qualify (≈ 5.5 %)**; MLS has the highest rate at 8.9 %
 - ~6,400 matches lack half-time scores in the source data and cannot be assessed; they are excluded
+- Team names are unified automatically: source files spell clubs inconsistently across seasons
+  (e.g. `Manchester United` in 2010-11→2019-20 & 2025-26 vs `Manchester United FC` elsewhere;
+  60 such variant groups exist). Variants are merged under the most frequent spelling, so team
+  stats and head-to-head records always cover the club's full history
 - All data is embedded in `index.html`, so the file works completely offline
 
 ## License
