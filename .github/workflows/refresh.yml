@@ -1,0 +1,45 @@
+name: Auto-refresh data
+
+on:
+  schedule:
+    # daily at 04:00 UTC — openfootball results usually land within a day
+    - cron: '0 4 * * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: data-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out dashboard repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Pull latest openfootball source
+        run: git clone --depth 1 https://github.com/openfootball/football.json.git "$RUNNER_TEMP/football.json"
+
+      - name: Rebuild dataset + dashboard
+        run: python pipeline/refresh.py --src "$RUNNER_TEMP/football.json" --repo .
+
+      - name: Commit + push if data changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ -n "$(git status --porcelain)" ]; then
+            git add -A
+            git commit -m "chore(data): auto-refresh from openfootball ($(date -u +'%Y-%m-%d %H:%M UTC'))"
+            git push
+            echo "Pushed refreshed data — GitHub Pages will redeploy."
+          else
+            echo "Source unchanged since last refresh — nothing to commit."
+          fi
