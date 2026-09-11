@@ -37,6 +37,7 @@ Live at: `https://zisinyoro-byte.github.io/BH_Dash/`
 | Team rankings | Most appearances in qualifying matches (home + away combined) |
 | HT → FT matrix | Half-time to full-time score transitions of qualifying matches |
 | Match browser | Searchable, sortable table of every qualifying match |
+| Team focus & H2H | Pick any two teams from the league: their head-to-head meetings with qualifying-pattern badges, per-team BTTS records (home/away splits, goal averages) and a side-by-side comparison chart — fully independent of the league analysis above |
 
 ## The rule
 
