@@ -1,0 +1,3 @@
+# python bytecode caches (regenerated on every CI run; nothing to track)
+__pycache__/
+*.pyc

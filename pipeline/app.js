@@ -429,9 +429,9 @@
 
   function teamStats(D, teamIdx) {
     var st = {
-      played: 0, evaluable: 0, qual: 0, btts: 0,
-      // [played, evaluable, qualified, both-scored-1H, both-scored-2H]
-      home: [0, 0, 0, 0, 0], away: [0, 0, 0, 0, 0],
+      played: 0, evaluable: 0, qual: 0, btts: 0, cs: 0,
+      // [played, evaluable, qualified, both-scored-1H, both-scored-2H, clean-sheets]
+      home: [0, 0, 0, 0, 0, 0], away: [0, 0, 0, 0, 0, 0],
       gf: 0, ga: 0, qualRows: [], byOpp: {},
     };
     D.forEach(function (m) {
@@ -441,6 +441,9 @@
       st.gf += isHome ? m.f0 : m.f1;
       st.ga += isHome ? m.f1 : m.f0;
       if (m.f0 > 0 && m.f1 > 0) st.btts++;
+      // clean sheet: team kept the opposition scoreless over 90 minutes
+      // (every packed match has a FT score, so the CS denominator = played)
+      if (isHome ? m.f1 === 0 : m.f0 === 0) { st.cs++; }
       var hasHt = m.h0 >= 0;
       var q = hasHt && isQual(m.h0, m.h1, m.f0, m.f1);
       if (hasHt) st.evaluable++;
@@ -449,6 +452,7 @@
       o.meets++;
       var bucket = isHome ? st.home : st.away;
       bucket[0]++;
+      if (isHome ? m.f1 === 0 : m.f0 === 0) bucket[5]++;
       if (hasHt) {
         bucket[1]++;
         if (m.h0 > 0 && m.h1 > 0) bucket[3]++;
@@ -670,6 +674,13 @@
            st.home[0] + ' played · of ' + st.home[1] + ' with HT', false);
     mkChip(chips, 'As away', st.away[2] + ' / ' + Math.max(st.away[1], 0),
            st.away[0] + ' played · of ' + st.away[1] + ' with HT', false);
+    mkChip(chips, 'Clean sheets',
+           st.played ? fmt1(100 * st.cs / st.played) + '%' : '—',
+           st.cs + ' of ' + st.played + ' matches (FT, 0 conceded)', false);
+    var csH = st.home[0] ? fmt1(100 * st.home[5] / st.home[0]) + '%' : '—';
+    var csA = st.away[0] ? fmt1(100 * st.away[5] / st.away[0]) + '%' : '—';
+    mkChip(chips, 'CS home / away', csH + ' / ' + csA,
+           st.home[5] + ' of ' + st.home[0] + ' H · ' + st.away[5] + ' of ' + st.away[0] + ' A', false);
     root.appendChild(chips);
 
     // ── highlight: opponent with the most BTTS-both-halves matches together ──
@@ -863,11 +874,13 @@
     var cB = sb.played ? Math.round(100 * sb.ga / sb.played) / 100 : 0;
     var tA = sa.played ? Math.round(100 * (sa.gf + sa.ga) / sa.played) / 100 : 0;
     var tB = sb.played ? Math.round(100 * (sb.gf + sb.ga) / sb.played) / 100 : 0;
+    var csA = sa.played ? Math.round(1000 * sa.cs / sa.played) / 10 : 0;
+    var csB = sb.played ? Math.round(1000 * sb.cs / sb.played) / 10 : 0;
 
-    var cats = ['Qualifying rate %', 'Classic BTTS rate %', 'Avg goals scored',
-                'Avg goals conceded', 'Avg match goals'];
-    var valsA = [rateA, bttsA, gA, cA, tA];
-    var valsB = [rateB, bttsB, gB, cB, tB];
+    var cats = ['Qualifying rate %', 'Classic BTTS rate %', 'Clean sheet %',
+                'Avg goals scored', 'Avg goals conceded', 'Avg match goals'];
+    var valsA = [rateA, bttsA, csA, gA, cA, tA];
+    var valsB = [rateB, bttsB, csB, gB, cB, tB];
 
     focusChart.setOption({
       backgroundColor: 'transparent',
@@ -899,7 +912,7 @@
       ],
     }, true);
     $('h2hChartDesc').textContent =
-      'Rates are % of matches with HT data (qualifying) / all matches (classic BTTS) · goal averages over all matches played';
+      'Rates are % of matches with HT data (qualifying) / all matches (classic BTTS, clean sheets) · goal averages over all matches played';
   }
 
   function renderFocus() {
@@ -939,6 +952,7 @@
     }).sort(byDateDesc);
 
     var qual = 0, evaluable = 0, btts = 0, goals = 0, winsA = 0, draws = 0, winsB = 0;
+    var csA = 0, csB = 0;
     meetings.forEach(function (m) {
       var hasHt = m.h0 >= 0;
       if (hasHt) evaluable++;
@@ -950,6 +964,8 @@
       if (aScore > bScore) winsA++;
       else if (aScore < bScore) winsB++;
       else draws++;
+      if (bScore === 0) csA++;
+      if (aScore === 0) csB++;
     });
 
     var sa = teamStats(D, ai), sb = teamStats(D, bi);
@@ -975,6 +991,8 @@
            'per meeting (FT)', false);
     mkChip(kpis, 'Record', winsA + ' · ' + draws + ' · ' + winsB,
            a + ' wins · draws · ' + b + ' wins', false);
+    mkChip(kpis, 'Clean sheets', csA + ' · ' + csB,
+           a + ' clean sheets · ' + b + ' clean sheets', false);
 
     renderMatchRows($('h2hRows'), meetings, {
       empty: 'No head-to-head meetings found between these two teams in this league ' +
