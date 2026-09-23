@@ -5,7 +5,7 @@ at.2,Österr. 2. Liga,2342,154,180,7.7%,at.2_btts_both_halves.csv
 at.cup,ÖFB Cup,183,5,10,5.5%,at.cup_btts_both_halves.csv
 au.1,Australia | A-League,293,16,24,8.2%,au.1_btts_both_halves.csv
 be.1,Belgium First Division A,1165,84,63,5.4%,be.1_btts_both_halves.csv
-br.1,Brasileiro Série A,1298,109,57,4.4%,br.1_btts_both_halves.csv
+br.1,Brasileiro Série A,1307,110,57,4.4%,br.1_btts_both_halves.csv
 br.2,Brasileiro Série B,53,4,3,5.7%,br.2_btts_both_halves.csv
 ch.1,Swiss Super League,673,47,46,6.8%,ch.1_btts_both_halves.csv
 ch.2,Swiss Challenge League,341,19,28,8.2%,ch.2_btts_both_halves.csv
@@ -13,30 +13,30 @@ cn.1,China | Super League,455,24,26,5.7%,cn.1_btts_both_halves.csv
 co.1,Colombia Primera A,139,28,6,4.3%,co.1_btts_both_halves.csv
 copa.l,Copa Libertadores,140,14,4,2.9%,copa.l_btts_both_halves.csv
 cz.1,Czech Republic First League,538,45,25,4.6%,cz.1_btts_both_halves.csv
-de.1,Deutsche Bundesliga,4646,277,310,6.7%,de.1_btts_both_halves.csv
+de.1,Deutsche Bundesliga,4654,278,311,6.7%,de.1_btts_both_halves.csv
 de.2,Deutsche 2. Bundesliga,3789,288,240,6.3%,de.2_btts_both_halves.csv
 de.3,Deutsche 3. Liga,2428,232,136,5.6%,de.3_btts_both_halves.csv
 de.cup,DFB Pokal,183,6,12,6.6%,de.cup_btts_both_halves.csv
 dz.1,Algeria | Ligue 1,131,29,4,3.1%,dz.1_btts_both_halves.csv
 eg.1,Egypt | Premiership,153,30,7,4.6%,eg.1_btts_both_halves.csv
-en.1,English Premier League,5735,385,336,5.9%,en.1_btts_both_halves.csv
-en.2,English Championship,7232,604,363,5.0%,en.2_btts_both_halves.csv
+en.1,English Premier League,5744,386,337,5.9%,en.1_btts_both_halves.csv
+en.2,English Championship,7244,604,365,5.0%,en.2_btts_both_halves.csv
 en.3,English League One,5229,495,281,5.4%,en.3_btts_both_halves.csv
 en.4,English League Two,5214,470,271,5.2%,en.4_btts_both_halves.csv
-es.1,Spain Primera División,4972,397,270,5.4%,es.1_btts_both_halves.csv
+es.1,Spain Primera División,4981,398,270,5.4%,es.1_btts_both_halves.csv
 es.2,Spain Segunda División,4221,521,206,4.9%,es.2_btts_both_halves.csv
-fr.1,French Ligue 1,3955,317,210,5.3%,fr.1_btts_both_halves.csv
+fr.1,French Ligue 1,3964,317,210,5.3%,fr.1_btts_both_halves.csv
 fr.2,French Ligue 2,2676,306,140,5.2%,fr.2_btts_both_halves.csv
 gr.1,Greek Super League,919,99,30,3.3%,gr.1_btts_both_halves.csv
 hu.1,Hungarian Nemzeti Bajnokság I,372,24,16,4.3%,hu.1_btts_both_halves.csv
-it.1,Italian Serie A,4627,343,270,5.8%,it.1_btts_both_halves.csv
+it.1,Italian Serie A,4637,343,270,5.8%,it.1_btts_both_halves.csv
 it.2,Italian Serie B,3772,412,185,4.9%,it.2_btts_both_halves.csv
 jp.1,Japan | J1 League,702,46,43,6.1%,jp.1_btts_both_halves.csv
 ma.1,Morocco | Botola Pro 1,179,21,7,3.9%,ma.1_btts_both_halves.csv
 mls,Major League Soccer,146,18,13,8.9%,mls_btts_both_halves.csv
 mx.1,Liga MX,1210,81,73,6.0%,mx.1_btts_both_halves.csv
-nl.1,Netherlands Eredivisie,2307,120,158,6.8%,nl.1_btts_both_halves.csv
-pt.1,Portuguese Primeira Liga,2329,172,109,4.7%,pt.1_btts_both_halves.csv
+nl.1,Netherlands Eredivisie,2316,120,159,6.9%,nl.1_btts_both_halves.csv
+pt.1,Portuguese Primeira Liga,2337,173,109,4.7%,pt.1_btts_both_halves.csv
 ru.1,Russia Premier League,646,74,26,4.0%,ru.1_btts_both_halves.csv
 ru.2,Russia 1. Division,208,32,10,4.8%,ru.2_btts_both_halves.csv
 sco.1,Scottish Premiership,803,63,35,4.4%,sco.1_btts_both_halves.csv
